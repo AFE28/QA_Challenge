@@ -1,0 +1,45 @@
+{
+    "compilerOptions": {
+        "baseUrl": "./",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "outDir": "./dist",
+        "paths": {
+            "*": [
+                "./tests/*",
+                "./pages/*",
+                "./utils/*",
+                "./fixtures/*",
+                "./test-data/*"
+            ],
+            "@fixtures/*": [
+                "./fixtures/*"
+            ],
+            "@pages/*": [
+                "./pages/*"
+            ],
+            "@utils/*": [
+                "./utils/*"
+            ],
+            "@test-data/*": [
+                "./test-data/*"
+            ],
+        },
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ES2021"
+    },
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
+    "include": [
+        "./tests/",
+        "./pages/",
+        "./utils/",
+        "./fixtures/"
+    ]
+}

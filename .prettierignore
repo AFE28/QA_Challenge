@@ -1,0 +1,5 @@
+# Ignore all files except those in specific directories
+# Add more patterns as needed
+*
+!/tests/
+!/pages/

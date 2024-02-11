@@ -1,0 +1,100 @@
+# Define the trigger for the pipeline to run when changes are pushed to the 'main' branch.
+trigger: none
+
+# Define the agent pool to be used by the pipeline
+pool:
+  name: hosted-linuxpool
+
+# Define variables for the pipeline, such as the .env file path and Node.js version.
+variables:
+  testEnvFile: '.env'
+  nodeVersion: '18.x'
+
+# Define parameters that can be customized when running the pipeline
+parameters:
+  - name: Environment
+    type: string
+    displayName: 'Select Environment'
+    values:
+      - 'demo.s1'
+  - name: selectedBrowser
+    type: string
+    displayName: 'Select Browser'
+    values:
+      - 'chromium'
+      - 'Google Chrome'
+  - name: testFiles
+    type: string
+    displayName: 'Specify Test Files or Folder (optional)'
+    default: 'Set a default value empty string'
+
+# Define the sequence of jobs to be executed
+jobs:
+  - job: RunPlaywrightTests
+    displayName: 'Run Playwright Tests'
+    steps:
+      # Install the specified version of Node.js
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '$(nodeVersion)'
+        displayName: 'Install Node.js'
+
+      # Install npm packages.
+      - script: npm install
+        displayName: 'npm install'
+
+      # Run EsLint.
+      - script: npm run lint 
+        displayName: 'npm run lint'
+
+      # Run Build Project.
+      - script: npm run build 
+        displayName: 'npm run build'
+
+      # Install Playwright browsers.
+      - script: |
+          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chrome
+        displayName: 'Install Playwright browsers'
+
+      # Set environment variables
+      - script: |
+          echo 'ENV="${{ parameters.Environment }}"' > config/.env
+          cat config/.env
+        displayName: 'Set Environment Variable'
+
+      # Run Playwright tests based on parameters
+      - script: |
+          # Display selected annotations and test files
+          echo "Test Files: ${{ parameters.testFiles }}"
+          echo "selected Browser: ${{ parameters.selectedBrowser }}"
+          npx playwright test ${{ parameters.testFiles }} --project="${{ parameters.selectedBrowser }}"
+        displayName: 'Run Playwright Tests'
+
+      # Publish the JUnit test results.
+      - task: PublishTestResults@2
+        displayName: 'Publish test results'
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: './test-JUNIT/results.xml'
+          mergeTestResults: true
+          failTaskOnFailedTests: true
+        condition: succeededOrFailed()
+
+      # Publish the Test Results as a pipeline artifacts.
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Test Results Artifacts'
+        inputs:
+          targetPath: './test-results'
+          artifact: test-results-artifact-$(Build.BuildId)
+          publishLocation: 'pipeline'
+        condition: succeededOrFailed()
+
+      # Publish the Playwright report as a pipeline artifact.
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Playwright Report Artifact'
+        inputs:
+          targetPath: './playwright-report'
+          artifact: playwright-report-artifact
+          publishLocation: 'pipeline'
+        condition: succeededOrFailed()
